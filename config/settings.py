@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     # Local apps
     'accounts',
+    'products',
 ]
 
 MIDDLEWARE = [
@@ -142,3 +143,8 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+import os
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
