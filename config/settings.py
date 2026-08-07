@@ -151,3 +151,15 @@ import os
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# برای محیط تست: ایمیلها واقعی ارسال نمیشوند و در ترمینال جاپ میشوند
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# برای محیط واقعی (Production)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'       # SMTP سرور
+# EMAIL_PORT = 587                    # پورت امن
+# EMAIL_USE_TLS = True                # استفاده از پروتکل امن TLS
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-app-password' # رمز عبور اختصاصی (App Password)
+# DEFAULT_FROM_EMAIL = 'فروشگاه ما <your-email@gmail.com>'
