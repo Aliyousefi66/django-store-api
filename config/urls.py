@@ -38,6 +38,8 @@ from drf_yasg import openapi
 # schema_view.security = [{'Bearer': []}]
 
 from drf_yasg.generators import OpenAPISchemaGenerator
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 class JWTSchemaGenerator(OpenAPISchemaGenerator):
     def get_schema(self, request=None, public=False):
@@ -59,8 +61,9 @@ schema_view = get_schema_view(
         description="مستندات کامل تمام اندپوینتهای سیستم فروشگاهی شامل احراز هویت، سبد خرید، سفارشات و پرداخت",
     ),
     public=True,
-    permission_classes=(permissions.AllowAny,),
+    permission_classes=[permissions.AllowAny,],
     generator_class=JWTSchemaGenerator,
+    authentication_classes=[],
 )
 
 urlpatterns = [
@@ -70,6 +73,7 @@ urlpatterns = [
     path('api/cart/', include('cart.urls')),
     path('api/orders/', include('orders.urls')),
     path('api/payments/', include('payments.urls')),
+    path('api/coupons/', include('coupons.urls', namespace='coupons')),
 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc'), name='schema-redoc'),

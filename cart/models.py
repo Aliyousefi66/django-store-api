@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import models
 from django.conf import settings
 from products.models import Product
@@ -7,12 +9,19 @@ class Cart(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    coupon = models.ForeignKey('coupons.Coupon', on_delete=models.SET_NULL, null=True, blank=True)
+
     def __str__(self):
         return f"Cart of {self.user.username}"
 
     @property
     def total_price(self):
-        return sum(item.total_price for item in self.items.all())
+        base_total = sum(item.total_price for item in self.items.all())
+        if self.coupon:
+            discount_percent = Decimal(self.coupon.discount) / Decimal(100)
+            discount_amount = base_total * discount_percent
+            return base_total - discount_amount
+        return base_total
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')

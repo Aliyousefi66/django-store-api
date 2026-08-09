@@ -1,15 +1,21 @@
 from django.db.models import Q
-from rest_framework import generics, filters
+from rest_framework import generics, filters, permissions
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from .models import Category, Product
 from .serializers import CategorySerializer, ProductSerializer
 
-class CategoryListView(generics.ListAPIView):
+class CategoryListView(generics.ListCreateAPIView):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
-class ProductListView(generics.ListAPIView):
+class ProductListView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     filter_backends = [filters.SearchFilter]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     search_fields = ['name', 'description']
 
     def get_queryset(self):

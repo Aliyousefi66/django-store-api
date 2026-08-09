@@ -1,3 +1,4 @@
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -16,6 +17,7 @@ class CartDetailView(APIView):
 class AddToCartView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(request_body=AddToCartSerializer,)
     def post(self, request):
         serializer = AddToCartSerializer(data=request.data)
         if serializer.is_valid():

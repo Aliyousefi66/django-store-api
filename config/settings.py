@@ -50,8 +50,10 @@ INSTALLED_APPS = [
     'cart',
     'orders',
     'payments',
+    'coupons',
 
-    'drf_yasg',
+    'drf_yasg'
+
 ]
 
 MIDDLEWARE = [
@@ -89,8 +91,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'django_store_db',
+        'USER': 'ali',
+        'PASSWORD': 'ali',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -165,3 +171,15 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_HOST_USER = 'your-email@gmail.com'
 # EMAIL_HOST_PASSWORD = 'your-app-password' # رمز عبور اختصاصی (App Password)
 # DEFAULT_FROM_EMAIL = 'فروشگاه ما <your-email@gmail.com>'
+
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+        }
+    },
+    'USE_SESSION_AUTH': False,
+}
