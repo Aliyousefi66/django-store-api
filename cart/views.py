@@ -37,6 +37,13 @@ class CartView(APIView):
             # پیدا کردن محصول از دیتابیس اصلی
             product = get_object_or_404(Product, id=product_id, is_active=True)
 
+            # چک کردن موجودی انبار قبل ار افرودن در سبد خرید
+            if product.stock < quantity:
+                return Response(
+                    {'error': f"موجودی این کالا کافی نیست، حداکثر موجودی: {product.stock}عدد "},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             # اضافه کردن به ردیس
             cart = RedisCart(request)
             cart.add(product=product, quantity=quantity, override_quantity=override_quantity)

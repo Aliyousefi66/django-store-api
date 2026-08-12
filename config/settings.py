@@ -46,7 +46,7 @@ INSTALLED_APPS = [
 
     # Local apps
     'accounts',
-    'products',
+    'products.apps.ProductsConfig',
     'cart',
     'orders',
     'payments',

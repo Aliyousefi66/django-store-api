@@ -2,6 +2,7 @@ from urllib import response
 
 from django.db.models import Q
 from rest_framework import generics, filters, permissions
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
@@ -55,4 +56,33 @@ class ProductListView(generics.ListCreateAPIView):
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
-    lookup_field = 'slug'
+    # lookup_field = 'slug'
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_value = self.kwargs.get('lookup')
+
+        if lookup_value.isdigit():
+            obj = get_object_or_404(queryset, id=lookup_value)
+        else:
+            obj = get_object_or_404(queryset, slug=lookup_value)
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def retrieve(self, request, *args, **kwargs):
+        lookup_value = kwargs.get('lookup') or kwargs.get('pk') or kwargs.get('slug')
+        cache_key = f"product_detail_{lookup_value}"
+
+        cache_data = cache.get(cache_key)
+        if cache_data:
+            print(f"PRODUCT {lookup_value} DETAILS CAME FROM REDIS CACHE!")
+            return Response(cache_data)
+
+        print("HIT THE DATABASE FOR PRODUCT {product_id} ...")
+        response = super().retrieve(request, *args, **kwargs)
+
+        timeout_value = getattr(settings, 'CACHE_TTL', 900)
+        cache.set(cache_key, response.data, timeout=timeout_value)
+
+        return response
