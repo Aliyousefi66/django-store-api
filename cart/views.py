@@ -1,59 +1,59 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status
 from django.shortcuts import get_object_or_404
-from .models import Cart, CartItem
-from .serializers import CartSerializer, CartItemSerializer, AddToCartSerializer
 from products.models import Product
+from .cart import RedisCart
+from .serializers import CartItemAddSerializer, CartItemResponseSerializer
 
-class CartDetailView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+
+class CartView(APIView):
+    """
+    مدیریت عملیات اصلی سبد خرید (نمایش، اضافه کردن و حذف) در ردیس
+    """
+
     def get(self, request):
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        serializer = CartSerializer(cart)
-        return Response(serializer.data)
+        """نمایش کل اقلام سبد خرید و قیمت نهایی"""
+        cart = RedisCart(request)
+        # پاس دادن ژنراتورِ سبد خرید به سریالایزر خروجی
+        serializer = CartItemResponseSerializer(cart, many=True)
 
-class AddToCartView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+        return Response({
+            'items': serializer.data,
+            'total_price': cart.get_total_price(),
+            'total_items': len(cart)
+        }, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(request_body=AddToCartSerializer,)
+    @swagger_auto_schema(request_body=CartItemAddSerializer)
     def post(self, request):
-        serializer = AddToCartSerializer(data=request.data)
+        """افزودن محصول به سبد خرید یا تغییر تعداد آن"""
+        serializer = CartItemAddSerializer(data=request.data)
         if serializer.is_valid():
             product_id = serializer.validated_data['product_id']
             quantity = serializer.validated_data['quantity']
+            override_quantity = serializer.validated_data['override_quantity']
 
+            # پیدا کردن محصول از دیتابیس اصلی
             product = get_object_or_404(Product, id=product_id, is_active=True)
-            cart, _ = Cart.objects.get_or_create(user=request.user)
 
-            if product.stock < quantity:
-                return Response(
-                    {"detail": f"موجودی انبار کافی نیست. موجودی فعلی: {product.stock}"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # اضافه کردن به ردیس
+            cart = RedisCart(request)
+            cart.add(product=product, quantity=quantity, override_quantity=override_quantity)
 
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=cart,
-                product=product,
-                defaults={'quantity': quantity}
-            )
-
-            if not created:
-                cart_item.quantity += quantity
-                cart_item.save()
-
-            return Response({"detail": "محصول با موفقیت به سبد خرید اضافه شد."}, status=status.HTTP_200_OK)
+            return Response({'message': 'آیتم با موفقیت به سبد خرید اضافه شد.'}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=CartItemAddSerializer)
+    def delete(self, request):
+        """حذف یک محصول خاص از سبد خرید"""
+        product_id = request.data.get('product_id')
+        if not product_id:
+            return Response({'error': 'ارسال product_id الزامی است.'}, status=status.HTTP_400_BAD_REQUEST)
 
-class RemoveFromCartView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+        product = get_object_or_404(Product, id=product_id)
+        cart = RedisCart(request)
+        cart.remove(product)
 
-    def delete(self, request, item_id):
-        cart = get_object_or_404(Cart, user=request.user)
-        caer_item = get_object_or_404(CartItem, cart=cart, id=item_id)
-        caer_item.delete()
-        return Response({"detail": "آیتم با موفقیت از سبد خرید حدف شد."}, status=status.HTTP_200_OK)
-
+        return Response({'message': 'محصول از سبد خرید حذف شد.'}, status=status.HTTP_200_OK)

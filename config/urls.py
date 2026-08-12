@@ -70,7 +70,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),
     path('api/store/', include('products.urls')),
-    path('api/cart/', include('cart.urls')),
+    path('api/cart/', include('cart.urls', namespace='cart')),
     path('api/orders/', include('orders.urls')),
     path('api/payments/', include('payments.urls')),
     path('api/coupons/', include('coupons.urls', namespace='coupons')),
