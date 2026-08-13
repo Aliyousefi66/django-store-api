@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from coupons.models import Coupon
+from cart.cart import RedisCart
 from .serializers import CouponApplySerializer
 
 class CouponApplyView(APIView):
@@ -26,8 +27,8 @@ class CouponApplyView(APIView):
                     active=True
                 )
 
-                request.user.cart.coupon = coupon
-                request.user.cart.save()
+                cart = RedisCart(request)
+                cart.apply_coupon(coupon)
 
                 return Response(
                     {

@@ -2,6 +2,7 @@ import redis
 import json
 from django.conf import settings
 from products.models import Product
+from coupons.models import Coupon
 
 # اتصال به دیتابیس ردیس (مطمئن شو کانفیگ‌های REDIS در settings برقرار است)
 redis_client = redis.StrictRedis(
@@ -26,6 +27,37 @@ class RedisCart:
             if not request.session.session_key:
                 request.session.create()
             self.cart_id = f"cart:{request.session.session_key}"
+
+        self.coupon_id = redis_client.hget(self.cart_id, 'coupon_id')
+
+    @property
+    def coupon(self):
+        if self.coupon_id:
+            try:
+                return Coupon.objects.get(id=self.coupon_id, active=True)
+            except Coupon.DoesNotExist:
+                return None
+        return None
+
+    def get_discount(self):
+        if self.coupon:
+            total_price = sum(float(json.loads(data)['price']) * json.loads(data)['quantity']
+                              for key, data in redis_client.hgetall(self.cart_id).items()
+                              if key != 'coupon_id')
+            return total_price * (self.coupon.discount / 100)
+        return 0.0
+
+    def get_total_price(self):
+        total_price = sum(float(json.loads(data)['price']) * json.loads(data)['quantity']
+                          for key, data in redis_client.hgetall(self.cart_id).items()
+                          if key != 'coupon_id')
+        return total_price - self.get_discount()
+
+    def apply_coupon(self, coupon):
+        redis_client.hset(self.cart_id, 'coupon_id', coupon.id)
+
+    def remove_coupon(self):
+        redis_client.hdel(self.cart_id, 'coupon_id')
 
     def add(self, product, quantity=1, override_quantity=False):
         """
@@ -66,7 +98,7 @@ class RedisCart:
         پیمایش (Loop) روی آیتم‌های سبد خرید و متصل کردن آن‌ها به مدل واقعی Product در Postgres
         """
         cart_data = redis_client.hgetall(self.cart_id)
-        product_ids = cart_data.keys()
+        product_ids = [k for k in cart_data.keys() if k != 'coupon_id']
 
         # خواندن یکجای تمام محصولات موجود در سبد خرید از دیت دیتابیس برای بهینه‌سازی (Avoid N+1 Query)
         products = Product.objects.filter(id__in=product_ids)
@@ -74,7 +106,8 @@ class RedisCart:
         # ساخت یک کپی از دیتای ردیس برای اضافه کردن شیء محصول به آن
         cart_clean = {}
         for p_id, data in cart_data.items():
-            cart_clean[p_id] = json.loads(data)
+            if p_id != 'coupon_id':
+                cart_clean[p_id] = json.loads(data)
 
         for product in products:
             p_id = str(product.id)
@@ -87,14 +120,7 @@ class RedisCart:
         محاسبه تعداد کل کالاها در سبد خرید
         """
         cart_data = redis_client.hgetall(self.cart_id)
-        return sum(json.loads(data)['quantity'] for data in cart_data.values())
-
-    def get_total_price(self):
-        """
-        محاسبه قیمت کل سبد خرید
-        """
-        cart_data = redis_client.hgetall(self.cart_id)
-        return sum(float(json.loads(data)['price']) * json.loads(data)['quantity'] for data in cart_data.values())
+        return sum(json.loads(data)['quantity'] for key, data in cart_data.items() if key != 'coupon_id')
 
     def clear(self):
         """

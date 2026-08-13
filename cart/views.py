@@ -5,7 +5,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from products.models import Product
 from .cart import RedisCart
-from .serializers import CartItemAddSerializer, CartItemResponseSerializer
+from .serializers import CartItemAddSerializer, CartItemResponseSerializer, CartResponseSerializer
 
 
 class CartView(APIView):
@@ -16,14 +16,10 @@ class CartView(APIView):
     def get(self, request):
         """نمایش کل اقلام سبد خرید و قیمت نهایی"""
         cart = RedisCart(request)
-        # پاس دادن ژنراتورِ سبد خرید به سریالایزر خروجی
-        serializer = CartItemResponseSerializer(cart, many=True)
 
-        return Response({
-            'items': serializer.data,
-            'total_price': cart.get_total_price(),
-            'total_items': len(cart)
-        }, status=status.HTTP_200_OK)
+        # پاس دادن ژنراتورِ سبد خرید به سریالایزر خروجی
+        serializer = CartResponseSerializer(cart, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @swagger_auto_schema(request_body=CartItemAddSerializer)
     def post(self, request):
