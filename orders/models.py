@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+
+from coupons.models import Coupon
 from products.models import Product
 
 class Order(models.Model):
@@ -13,9 +15,14 @@ class Order(models.Model):
     address = models.TextField()
     postal_code = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    coupon = models.ForeignKey('coupons.Coupon', on_delete=models.SET_NULL, null=True, blank=True)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0) # قیمت قبل تخفیف
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0) # میزان تخفیف
+    final_price = models.DecimalField(max_digits=12, decimal_places=2, default=0) # قیمت نهایی پرداختی
 
     def __str__(self):
         return f"Order #{self.id} - {self.user.username}"

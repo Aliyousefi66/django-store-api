@@ -22,24 +22,30 @@ class CreateOrderView(APIView):
         if len(cart) == 0:
             return Response({"detail": "سبد شما خالی است."}, status=status.HTTP_400_BAD_REQUEST)
 
+        for cart_item in cart:
+            product = cart_item['product']
+            quantity = cart_item['quantity']
+            if product.stock < quantity:
+                return Response(
+                    {"detail": f"متاسفانه موجودی محصول '{product.name}' کافی نیست (موجودی فعلی: {product.stock})."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         with transaction.atomic():
             order = Order.objects.create(
                 user=request.user,
                 address=serializer.validated_data['address'],
                 postal_code=serializer.validated_data['postal_code'],
-                total_price=cart.get_total_price(),
+                coupon=cart.coupon,
+                total_price=sum(item['total_price'] for item in cart), # جمع کل خام
+                discount_amount=cart.get_discount(), # میزان تخفیف
+                final_price=cart.get_total_price(), # مبلغ نهایی
             )
 
             for cart_item in cart:
                 product = cart_item['product']
                 quantity = cart_item['quantity']
 
-                if product.stock < quantity:
-                    # استفاده دکراتور atomic باعث میشود اگر این خطا رخ داد، کل سفارش لغو شود و دیتابیس به حالت قبل برگردد
-                    return Response(
-                        {"detail": f"متاسفانه موجودی محصول {product.name} در این لحظه کافی نیست."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
                 OrderItem.objects.create(
                     order=order,
                     product=product,

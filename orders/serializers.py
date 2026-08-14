@@ -15,8 +15,10 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('id', 'user', 'address', 'postal_code', 'status', 'total_price', 'items', 'created_at')
-        read_only_fields = ('user', 'status', 'total_price')
+        fields = ('id', 'user', 'address', 'postal_code', 'status',
+                  'coupon', 'total_price', 'discount_amount', 'final_price',
+                  'items', 'created_at')
+        read_only_fields = ('user', 'status', 'coupon', 'total_price', 'discount_amount', 'final_price')
 
 class CreateOrderSerializer(serializers.Serializer):
     address = serializers.CharField(required=True)
