@@ -19,17 +19,16 @@ class ProcessPaymentView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        for item in order.items.all():
-            if item.product.stock < item.quantity:
-                return Response(
-                    {"detail": f"موجودی کالا {item.product.name}کافی نیست."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        if order.status == 'canceled':
+            return Response(
+                {"detail": "این سفارش لغو شده است و امکان پرداخت آن وجود ندارد."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         with transaction.atomic():
-            payment, _ = Payment.objects.get_or_create(
+            payment, created = Payment.objects.get_or_create(
                 order=order,
-                defaults={'amount': order.total_price}
+                defaults={'amount': order.final_price}
             )
 
             fake_ref_id = f"REF-{uuid.uuid4().hex[:8].upper()}"
@@ -40,14 +39,11 @@ class ProcessPaymentView(APIView):
             order.status = 'paid'
             order.save()
 
-            for item in order.items.all():
-                item.product.stock -= item.quantity
-                item.product.save()
-
         return Response({
             "detail": "پرداخت با موفقیت انجام شد.",
             "ref_id": fake_ref_id,
             "order_id": order.pk,
-            "total_paid": order.total_price,
+            "total_paid": order.final_price,
+            "payment_status": payment.status,
         }, status=status.HTTP_200_OK)
 

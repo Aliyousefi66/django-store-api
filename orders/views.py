@@ -31,15 +31,19 @@ class CreateOrderView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+        raw_total = sum(float(item['price']) * item['quantity'] for item in cart)
+        discount = cart.get_discount()
+        final_price = cart.get_total_price()
+
         with transaction.atomic():
             order = Order.objects.create(
                 user=request.user,
                 address=serializer.validated_data['address'],
                 postal_code=serializer.validated_data['postal_code'],
                 coupon=cart.coupon,
-                total_price=sum(item['total_price'] for item in cart), # جمع کل خام
-                discount_amount=cart.get_discount(), # میزان تخفیف
-                final_price=cart.get_total_price(), # مبلغ نهایی
+                total_price=raw_total, # جمع کل خام
+                discount_amount=discount, # میزان تخفیف
+                final_price=final_price, # مبلغ نهایی
             )
 
             for cart_item in cart:
