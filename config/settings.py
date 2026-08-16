@@ -185,10 +185,18 @@ SWAGGER_SETTINGS = {
 }
 
 
+
+# ==================================================
+# REDIS CONFIGURATION
+# ==================================================
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
+
 CACHES = {
     'default': {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -196,3 +204,12 @@ CACHES = {
 }
 
 CACHE_TTl = 60 * 15
+
+
+# Zarinpal Settings
+ZARINPAL_MERCHANT_ID = '00000000-0000-0000-0000-000000000000'
+ZARINPAL_REQUEST_URL = 'https://sandbox.zarinpal.com/pg/v4/payment/request.json'
+ZARINPAL_STARTPAY_URL = 'https://sandbox.zarinpal.com/pg/StartPay/'
+ZARINPAL_VERIFY_URL = 'https://sandbox.zarinpal.com/pg/v4/payment/verify.json'
+ZARINPAL_CALLBACK_URL = 'https://127.0.0.1:8000/api/payments/verify'
+

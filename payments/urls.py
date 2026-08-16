@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import ProcessPaymentView
+from .views import PaymentRequestView, PaymentVerifyView
 
 urlpatterns = [
-    path('process/<int:order_pk>/', ProcessPaymentView.as_view(), name='payment-process'),
+    path('request/<int:order_pk>', PaymentRequestView.as_view(), name='payment-request'),
+    path('verify/', PaymentVerifyView.as_view(), name='payment-verify'),
 ]
