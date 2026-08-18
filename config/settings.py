@@ -153,7 +153,8 @@ REST_FRAMEWORK = {
         'anon': '20/minute', # کاربران غیر عضو: حداکثر ۲۰ درخواست در دقیقه
         'user': '100/minute', # کاربران لاگین شده: حداکثر ۱۰۰ درخواست در دقیقه
         'payment': '5/minute', # نرح اختصاصی برای حساس ترین بخش (درگاه پرداخت)
-    }
+    },
+    'EXCEPTION_HANDLER': 'config.exceptions.custom_exception_handler',
 }
 
 SIMPLE_JWT = {
@@ -221,4 +222,37 @@ ZARINPAL_REQUEST_URL = 'https://sandbox.zarinpal.com/pg/v4/payment/request.json'
 ZARINPAL_STARTPAY_URL = 'https://sandbox.zarinpal.com/pg/StartPay/'
 ZARINPAL_VERIFY_URL = 'https://sandbox.zarinpal.com/pg/v4/payment/verify.json'
 ZARINPAL_CALLBACK_URL = 'https://127.0.0.1:8000/api/payments/verify'
+
+
+import os
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'errors.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    },
+}
 

@@ -1,0 +1,14 @@
+ERROR 2026-08-18 10:09:14,254 exceptions Internal Server Error in ProductListView: division by zero
+Traceback (most recent call last):
+  File "/home/ali/Desktop/Django/DjangoProject/django_store/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ali/Desktop/Django/DjangoProject/django_store/.venv/lib/python3.12/site-packages/rest_framework/generics.py", line 243, in get
+    return self.list(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ali/Desktop/Django/DjangoProject/django_store/products/views.py", line 63, in list
+    x = 1 / 0
+        ~~^~~
+ZeroDivisionError: division by zero
+ERROR 2026-08-18 10:09:14,258 log Internal Server Error: /api/store/products/
+ERROR 2026-08-18 10:09:14,259 log "GET /api/store/products/ HTTP/1.1" 500 163
