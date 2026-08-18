@@ -144,7 +144,16 @@ from datetime import timedelta
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_THROTTLE_CLASSES': (
+        'rest_framework.throttling.AnonRateThrottle', # برای کاربران ناشناس
+        'rest_framework.throttling.UserRateThrottle', # برای کاربران لاگین شده
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/minute', # کاربران غیر عضو: حداکثر ۲۰ درخواست در دقیقه
+        'user': '100/minute', # کاربران لاگین شده: حداکثر ۱۰۰ درخواست در دقیقه
+        'payment': '5/minute', # نرح اختصاصی برای حساس ترین بخش (درگاه پرداخت)
+    }
 }
 
 SIMPLE_JWT = {
